@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 import textwrap
 import warnings
@@ -442,8 +441,11 @@ class VLMGRPOTrainer(Trainer):
         ]
         images = [x["image"] for x in inputs]
         # Ensure all images are RGB to avoid 2D array issues
-        images = [img.convert("RGB") if hasattr(img, 'mode') and img.mode != "RGB" else img for img in images]
-        
+        images = [
+            img.convert("RGB") if hasattr(img, "mode") and img.mode != "RGB" else img
+            for img in images
+        ]
+
         prompt_inputs = self.processing_class(
             text=text,
             images=images,

@@ -3,7 +3,7 @@
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 
 CUDA_VISIBLE_DEVICES=$1 python grpo.py \
-  --base_model "models/sft_512/checkpoint-100/roi" \
+  --base_model "models/sft_512/checkpoint-1082/roi" \
   --processor "HuggingFaceTB/SmolVLM-256M-Instruct" \
   --longest_edge 512 \
   --dataset_path "/tmp/cropvlm_dataset_grpo" \

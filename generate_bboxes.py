@@ -50,6 +50,7 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+
 # add more to generate for other datasets
 DATASETS = {
     "textvqa": "lmms-lab/textvqa",
@@ -87,12 +88,21 @@ for k in DATASETS:
                 ],
             },
         ]
-        
+
         qid = e["question_id"]
 
-
         prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
-        inputs = processor(text=prompt, images=[e["image"]], return_tensors="pt")
+        inputs = processor(
+            text=prompt,
+            images=[
+                (
+                    e["image"].convert("RGB")
+                    if hasattr(e["image"], "mode") and e["image"].mode != "RGB"
+                    else e["image"]
+                )
+            ],
+            return_tensors="pt",
+        )
         inputs = inputs.to(f"cuda:{args.gpu}")
 
         # Generate outputs
@@ -104,7 +114,6 @@ for k in DATASETS:
             skip_special_tokens=True,
         )
         response = generated_texts[0].split("Assistant: ")[-1]
-       
 
         predictions.append({"question_id": qid, "answer": response})
         if args.verbose:
@@ -123,7 +132,7 @@ for k in DATASETS:
                 float(coordinates[2]) * width / 100,
                 float(coordinates[3]) * height / 100,
             )
-            
+
             if [x1, y1, x2, y2] == [0, 0, 0, 0]:
                 continue
 
@@ -131,4 +140,4 @@ for k in DATASETS:
         i += 1
 
     with open(os.path.join(args.output, f"{k}_bbox.json"), "w") as f:
-            json.dump(predictions, f)
+        json.dump(predictions, f)

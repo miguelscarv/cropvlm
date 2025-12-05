@@ -106,7 +106,12 @@ def expand_bbox(bbox, width, height, area_multiplier):
     x2 = max(0, min(x2, width))
     y2 = max(0, min(y2, height))
 
-    return [int(x1/width*100), int(y1/height*100), int(x2/width*100), int(y2/height*100)]
+    return [
+        int(x1 / width * 100),
+        int(y1 / height * 100),
+        int(x2 / width * 100),
+        int(y2 / height * 100),
+    ]
 
 
 def get_qwenvl_response(model, processor, image, instruction, args):
@@ -168,7 +173,6 @@ def extract_bbox_from_response(response_text):
     return json.loads(response_json)
 
 
-
 def main():
     args = parse_arguments()
 
@@ -185,7 +189,7 @@ def main():
     split_point = total_samples // 2
     ds_sft = ds.select(range(split_point))
     ds_grpo = ds.select(range(split_point, total_samples))
-    
+
     print(f"\nSplit dataset into two equal parts:")
     print(f"  SFT dataset: {len(ds_sft)} samples")
     print(f"  GRPO dataset: {len(ds_grpo)} samples")
@@ -202,10 +206,10 @@ def main():
     print("Model loaded successfully")
 
     # Process SFT dataset with Qwen bbox generation (exactly as before)
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Processing SFT dataset with Qwen bbox generation...")
-    print("="*60)
-    
+    print("=" * 60)
+
     print("\nStep 1: Generating bounding boxes using Qwen...")
     generated_bboxes = []
     for i, e in tqdm(enumerate(ds_sft), total=len(ds_sft), desc="Generating bboxes"):
@@ -224,8 +228,12 @@ def main():
 
             bbox = extract_bbox_from_response(response)
             if args.verbose:
-                print(f"{i} - Bbox: {bbox}, Question: {question}, GT Answer: {e['answers']}")
-                e["image"].crop([bbox[0], bbox[1], bbox[2], bbox[3]]).save(f"crop_{i}.png")
+                print(
+                    f"{i} - Bbox: {bbox}, Question: {question}, GT Answer: {e['answers']}"
+                )
+                e["image"].crop([bbox[0], bbox[1], bbox[2], bbox[3]]).save(
+                    f"crop_{i}.png"
+                )
             generated_bboxes.append(bbox)
         except Exception as exc:
             print(f"Error processing sample {i}: {exc}")
@@ -233,7 +241,9 @@ def main():
 
     print("\nStep 2: Calculating percentiles of relative bounding box areas...")
     relative = []
-    for i, e in tqdm(enumerate(ds_sft), total=len(ds_sft), desc="Calculating percentiles"):
+    for i, e in tqdm(
+        enumerate(ds_sft), total=len(ds_sft), desc="Calculating percentiles"
+    ):
         bbox = generated_bboxes[i]
         if bbox[0] == -1:
             continue
@@ -301,9 +311,9 @@ def main():
     ds_sft = ds_sft.add_column("bbox", larger_bbox)
 
     # GRPO dataset: no bboxes, just keep as-is
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("GRPO dataset: keeping original dataset without bboxes...")
-    print("="*60)
+    print("=" * 60)
 
     # Save both datasets
     output_path_sft = args.output_path + "_sft"
@@ -311,16 +321,16 @@ def main():
 
     print(f"\nSaving SFT dataset to {output_path_sft}...")
     ds_sft.save_to_disk(output_path_sft)
-    
+
     print(f"\nSaving GRPO dataset to {output_path_grpo}...")
     ds_grpo.save_to_disk(output_path_grpo)
-    
-    print(f"\n" + "="*60)
+
+    print(f"\n" + "=" * 60)
     print(f"Datasets saved successfully!")
     print(f"  SFT dataset: {len(ds_sft)} samples -> {output_path_sft}")
     print(f"  GRPO dataset: {len(ds_grpo)} samples -> {output_path_grpo}")
-    print(f"="*60)
+    print(f"=" * 60)
+
 
 if __name__ == "__main__":
     main()
-

@@ -44,6 +44,7 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+
 # add more to generate for other datasets
 DATASETS = {
     "textvqa": "lmms-lab/textvqa",
@@ -70,9 +71,13 @@ for k in DATASETS:
     predictions = []
     i = 0
     for e, b in tqdm(zip(ds, bbox)):
-
+        img = (
+            e["image"].convert("RGB")
+            if hasattr(e["image"], "mode") and e["image"].mode != "RGB"
+            else e["image"]
+        )
         qid = e["question_id"]
-        height, width = e["image"].height, e["image"].width
+        height, width = img.height, img.width
 
         coordinates = (
             b["answer"].replace("[", "").replace("].", "").replace("]", "").split(",")
@@ -88,7 +93,7 @@ for k in DATASETS:
             x1, y1, x2, y2 = 0, 0, 99, 99
             print("Error in bbox")
 
-        cropped_image = e["image"].crop((x1, y1, x2, y2))
+        cropped_image = img.crop((x1, y1, x2, y2))
 
         messages = [
             {
@@ -98,7 +103,7 @@ for k in DATASETS:
                     {"type": "image"},
                     {
                         "type": "text",
-                        "text":  f"{e['question'].capitalize()}\nGive a very brief answer."
+                        "text": f"{e['question'].capitalize()}\nGive a very brief answer.",
                     },
                 ],
             },
@@ -107,7 +112,7 @@ for k in DATASETS:
         prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
         inputs = processor(
             text=prompt,
-            images=[e["image"], cropped_image],
+            images=[img, cropped_image],
             return_tensors="pt",
         )
         inputs = inputs.to(f"cuda:{args.gpu}")
@@ -127,14 +132,16 @@ for k in DATASETS:
         predictions.append({"question_id": qid, "answer": final_response})
 
         if args.verbose:
-            e["image"].save(f"full_{i}.png")
+            img.save(f"full_{i}.png")
             cropped_image.save(f"cropped_{i}.png")
             print(i, e["question"], e["answers"], final_response)
 
         i += 1
 
     with open(
-        os.path.join(args.output, args.bbox.split("/")[-1].replace("_bbox.json", "_answers.json")),
+        os.path.join(
+            args.output, args.bbox.split("/")[-1].replace("_bbox.json", "_answers.json")
+        ),
         "w",
     ) as f:
         json.dump(predictions, f)

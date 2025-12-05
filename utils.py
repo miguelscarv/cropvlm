@@ -138,7 +138,9 @@ class TrainingArguments(TrainingArguments):
     )
     report_to: str = field(
         default="none",
-        metadata={"help": "The list of integrations to report the results and logs to."},
+        metadata={
+            "help": "The list of integrations to report the results and logs to."
+        },
     )
 
 
@@ -238,6 +240,7 @@ def accuracy_rewards(prompts, completions, true_answers, **kwargs):
 
     return scores
 
+
 def log_likelihood_rewards(prompts, completions, **kwargs):
     return [completion["second"] for completion in completions]
 
@@ -298,11 +301,6 @@ def collate_fn(examples, processor=None, image_token_id=None, data_type=None):
             answer = max(answer_counts.items(), key=lambda x: x[1])[0]
         elif data_type == "roi":
             bbox = example["bbox"]
-            width, height = image.width, image.height
-            bbox[0] = int(bbox[0] / width * 100)
-            bbox[1] = int(bbox[1] / height * 100)
-            bbox[2] = int(bbox[2] / width * 100) + 1
-            bbox[3] = int(bbox[3] / height * 100) + 1
             answer = f"[{bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}]"
         else:
             raise ValueError(f"Have not implemented this data_type yet: {data_type}")
@@ -326,7 +324,6 @@ def collate_fn(examples, processor=None, image_token_id=None, data_type=None):
             },
         ]
 
-        
         text = processor.apply_chat_template(messages, add_generation_prompt=False)
         texts.append(text.strip())
         images.append([image])
