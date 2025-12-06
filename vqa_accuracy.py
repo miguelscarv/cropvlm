@@ -2,8 +2,6 @@ import argparse
 from datasets import load_dataset
 import json
 from utils import vqa_accuracy
-from anls import anls_score
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
