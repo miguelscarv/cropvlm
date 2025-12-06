@@ -411,8 +411,6 @@ def crop_image(image, bbox):
         x2 = x2_pct * width / 100
         y2 = y2_pct * height / 100
 
-        squaredness = min((x2 - x1) / (y2 - y1), (y2 - y1) / (x2 - x1))
-
     except:
 
         x1 = 0
@@ -420,11 +418,9 @@ def crop_image(image, bbox):
         x2 = 2
         y2 = 2
 
-        squaredness = None
-
     cropped_image = image.crop((x1, y1, x2, y2))
 
-    return cropped_image, squaredness
+    return cropped_image
 
 
 def calculate_area_iou(bboxes):

@@ -68,7 +68,7 @@ model = AutoModelForVision2Seq.from_pretrained(
 model.eval()
 
 for k in DATASETS:
-    ds = load_dataset(DATASETS[k], split="validation", cache_dir="/tmp")
+    ds = load_dataset(DATASETS[k], split="validation", cache_dir="datasets")
 
     predictions = []
     i = 0

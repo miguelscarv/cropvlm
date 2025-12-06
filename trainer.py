@@ -50,7 +50,7 @@ from trl.models import (
 )
 from trl.trainer.grpo_config import GRPOConfig
 from trl.trainer.utils import generate_model_card, get_comet_experiment_url, pad
-from utils import crop_image, calculate_area_iou, get_ll
+from utils import crop_image, get_ll
 
 if is_peft_available():
     from peft import PeftConfig, get_peft_model
@@ -559,16 +559,13 @@ class VLMGRPOTrainer(Trainer):
                 completion_ids, skip_special_tokens=True
             )
 
-            all_squarednesses = []
             vqa_model_inputs = {"input_ids": [], "pixel_values": []}
             for i, c in enumerate(first_completions):
                 temp_messages = inputs[0]["second_prompt"]
 
                 temp_text = self.response_processor.apply_chat_template(temp_messages)
 
-                second_image, squaredness = crop_image(images[0], c)
-                if squaredness:
-                    all_squarednesses.append(squaredness)
+                second_image = crop_image(images[0], c)
 
                 prompt_inputs = self.response_processor(
                     text=temp_text,
@@ -760,15 +757,6 @@ class VLMGRPOTrainer(Trainer):
         ).mean()
         self._metrics["kl"].append(
             self.accelerator.gather_for_metrics(mean_kl).mean().item()
-        )
-
-        mean, iou = calculate_area_iou(first_completions)
-
-        self._metrics["mean_bbox_area"].append(mean)
-        self._metrics["group_iou"].append(iou)
-
-        self._metrics["squaredness"].append(
-            sum(all_squarednesses) / len(all_squarednesses) if all_squarednesses else 0
         )
 
         return loss

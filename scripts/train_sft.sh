@@ -6,7 +6,7 @@ export CUDA_DEVICE_ORDER=PCI_BUS_ID
 CUDA_VISIBLE_DEVICES=$1 python sft.py \
   --base_model "HuggingFaceTB/SmolVLM-256M-Instruct" \
   --processor "HuggingFaceTB/SmolVLM-256M-Instruct" \
-  --dataset_path "/tmp/cropvlm_dataset_sft" \
+  --dataset_path "datasets/cropvlm_dataset_sft" \
   --output_dir "models/sft_512" \
   --data_type "roi" \
   --lora_r 128 \

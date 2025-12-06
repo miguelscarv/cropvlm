@@ -54,7 +54,7 @@ if model_args.use_lora:
     model.print_trainable_parameters()
 
 try:
-    train_ds = load_dataset(data_args.dataset_path, split="train", cache_dir="/tmp")
+    train_ds = load_dataset(data_args.dataset_path, split="train", cache_dir="datasets")
 except:
     train_ds = load_from_disk(data_args.dataset_path)
 

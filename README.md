@@ -12,7 +12,7 @@ Vision-Language Models (VLMs) often struggle with tasks that require fine-graine
 ```bash
 git clone https://github.com/miguelscarv/cropvlm.git
 cd cropvlm
-mkdir models predictions
+mkdir models predictions datasets
 conda create -n cropvlm python=3.12
 conda activate cropvlm
 pip install -r requirements.txt
@@ -50,10 +50,18 @@ python3 generate_bbox.py --model_path <CROPVLM_MODEL_PATH>
 The bounding box predictions will then be stored in `predictions`.
 
 ### Final Answer Generation
-To generate the final answers using SmolVLM using the above generated bounding box predictions file.
+To generate the final answers using SmolVLM (with and without the generated crops).
 ```bash
-python3 generate_final_answers.py --bbox <BBOX_PATH>
+python3 generate_final_answers.py --bbox predictions/textvqa_bbox.json
 ```
+These will also be store in `predictions`.
+
+## Evaluation
+To caculate VQA Accuracy for the predictions generated above.
+```bash
+python3 vqa_accuracy.py --predictions_file <PREDICTIONS_PATH>
+```
+
 
 ## Bibtex
 If you find CropVLM helpful for your work, please cite

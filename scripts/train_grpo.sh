@@ -6,7 +6,7 @@ CUDA_VISIBLE_DEVICES=$1 python grpo.py \
   --base_model "models/sft_512/checkpoint-1082/roi" \
   --processor "HuggingFaceTB/SmolVLM-256M-Instruct" \
   --longest_edge 512 \
-  --dataset_path "/tmp/cropvlm_dataset_grpo" \
+  --dataset_path "datasets/cropvlm_dataset_grpo" \
   --output_dir "models/grpo_512" \
   --remove_unused_columns false \
   --lr_scheduler_type "cosine" \
@@ -25,3 +25,5 @@ CUDA_VISIBLE_DEVICES=$1 python grpo.py \
   --beta 0.01 \
   --max_prompt_length 32000 \
   --max_completion_length 32 \
+
+  

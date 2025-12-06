@@ -31,7 +31,7 @@ def parse_arguments():
         "--output_path",
         type=str,
         help="Output dataset path",
-        default="/tmp/cropvlm_dataset",
+        default="datasets/cropvlm_dataset",
     )
     parser.add_argument(
         "--split",

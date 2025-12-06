@@ -52,7 +52,10 @@ DATASETS = {
 args = parse_arguments()
 
 processor = AutoProcessor.from_pretrained(
-    args.vqa_model_path, size={"longest_edge": args.longest_edge}
+    args.vqa_model_path,
+    size={"longest_edge": args.longest_edge},
+    padding_side="left",
+    padding=True,
 )
 
 vqa_model = AutoModelForVision2Seq.from_pretrained(
@@ -66,9 +69,10 @@ with open(args.bbox, "r") as f:
     bbox = json.load(f)
 
 for k in DATASETS:
-    ds = load_dataset(DATASETS[k], split="validation", cache_dir="/tmp")
+    ds = load_dataset(DATASETS[k], split="validation", cache_dir="datasets")
 
-    predictions = []
+    bbox_predictions = []
+    base_predictions = []
     i = 0
     for e, b in tqdm(zip(ds, bbox)):
         img = (
@@ -96,23 +100,37 @@ for k in DATASETS:
         cropped_image = img.crop((x1, y1, x2, y2))
 
         messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image"},
-                    {"type": "image"},
-                    {
-                        "type": "text",
-                        "text": f"{e['question'].capitalize()}\nGive a very brief answer.",
-                    },
-                ],
-            },
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {"type": "image"},
+                        {
+                            "type": "text",
+                            "text": f"{e['question'].capitalize()}\nGive a very brief answer.",
+                        },
+                    ],
+                },
+            ],
+            [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {
+                            "type": "text",
+                            "text": f"{e['question'].capitalize()}\nGive a very brief answer.",
+                        },
+                    ],
+                },
+            ],
         ]
 
         prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
         inputs = processor(
             text=prompt,
-            images=[img, cropped_image],
+            images=[[img, cropped_image], [img]],
             return_tensors="pt",
         )
         inputs = inputs.to(f"cuda:{args.gpu}")
@@ -125,23 +143,38 @@ for k in DATASETS:
             generated_ids,
             skip_special_tokens=True,
         )
-        final_response = generated_texts[0].split("Assistant: ")[-1]
-        if final_response[-1] == ".":
-            final_response = final_response[:-1]
 
-        predictions.append({"question_id": qid, "answer": final_response})
+        final_response_bbox = generated_texts[0].split("Assistant: ")[-1]
+        if final_response_bbox[-1] == ".":
+            final_response_bbox = final_response_bbox[:-1]
+
+        bbox_predictions.append({"question_id": qid, "answer": final_response_bbox})
+        final_response_base = generated_texts[1].split("Assistant: ")[-1]
+        if final_response_base[-1] == ".":
+            final_response_base = final_response_base[:-1]
+        base_predictions.append({"question_id": qid, "answer": final_response_base})
 
         if args.verbose:
             img.save(f"full_{i}.png")
             cropped_image.save(f"cropped_{i}.png")
-            print(i, e["question"], e["answers"], final_response)
+            print(i, e["question"], e["answers"], final_response_bbox)
 
         i += 1
 
     with open(
         os.path.join(
-            args.output, args.bbox.split("/")[-1].replace("_bbox.json", "_answers.json")
+            args.output,
+            args.bbox.split("/")[-1].replace("_bbox.json", "_cropvlm_answers.json"),
         ),
         "w",
     ) as f:
-        json.dump(predictions, f)
+        json.dump(bbox_predictions, f)
+
+    with open(
+        os.path.join(
+            args.output,
+            args.bbox.split("/")[-1].replace("_bbox.json", "_base_answers.json"),
+        ),
+        "w",
+    ) as f:
+        json.dump(base_predictions, f)
